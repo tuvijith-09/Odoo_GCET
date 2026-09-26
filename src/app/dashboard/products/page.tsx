@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { PackagePlus, Edit2, AlertTriangle, Layers } from "lucide-react";
 import SearchFilter from "@/components/SearchFilter";
+import ProductQrModal from "@/components/ProductQrModal";
 
 export const dynamic = "force-dynamic";
 
@@ -158,12 +159,24 @@ export default async function ProductsPage({
                     {product.stockQuants.length === 0 && <span>No stock registered</span>}
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <Link
-                      href={`/dashboard/products/${product.id}`}
-                      className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition"
-                    >
-                      <Edit2 size={12} /> Edit
-                    </Link>
+                    <div className="flex items-center gap-1.5 justify-end">
+                      <ProductQrModal
+                        product={{
+                          id: product.id,
+                          name: product.name,
+                          sku: product.sku,
+                          category: product.category,
+                          uom: product.uom,
+                          costPrice: product.costPrice,
+                        }}
+                      />
+                      <Link
+                        href={`/dashboard/products/${product.id}`}
+                        className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition"
+                      >
+                        <Edit2 size={12} /> Edit
+                      </Link>
+                    </div>
                   </td>
                 </tr>
               );

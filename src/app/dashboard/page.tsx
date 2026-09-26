@@ -10,6 +10,11 @@ import {
   ClipboardList,
   Truck,
   CheckCircle2,
+  Bot,
+  Scan,
+  Sparkles,
+  ShieldAlert,
+  AreaChart,
 } from "lucide-react";
 import Link from "next/link";
 import DashboardFilters from "@/components/DashboardFilters";
@@ -238,6 +243,54 @@ export default async function DashboardPage({
               View Operations <ArrowRight size={13} />
             </Link>
           </div>
+        </div>
+      </div>
+
+      {/* AI & Automation Quick Hub Strip */}
+      <div className="bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 rounded-2xl p-5 text-white shadow-md flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold uppercase tracking-wider text-indigo-300 flex items-center gap-1.5">
+              <Sparkles size={14} className="text-indigo-300" /> StockSense AI & Smart Automation
+            </span>
+          </div>
+          <h3 className="text-lg font-bold">Ask AI, Scan Barcodes & Forecast Stock Run-Out</h3>
+          <p className="text-xs text-indigo-200">
+            Natural language database queries, mobile QR scanning, predictive depletion alerts, and anomaly detection.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/dashboard/assistant"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white text-indigo-900 font-bold text-xs hover:bg-indigo-50 transition shadow-sm"
+          >
+            <Bot size={15} className="text-indigo-600" /> AI Assistant
+          </Link>
+          <Link
+            href="/dashboard/scanner"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-700/60 hover:bg-indigo-700 border border-indigo-400/30 text-white font-semibold text-xs transition"
+          >
+            <Scan size={15} /> QR Scanner
+          </Link>
+          <Link
+            href="/dashboard/predictions"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-700/60 hover:bg-indigo-700 border border-indigo-400/30 text-white font-semibold text-xs transition"
+          >
+            <Sparkles size={15} /> Reorder Predictions
+          </Link>
+          <Link
+            href="/dashboard/anomalies"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-700/60 hover:bg-indigo-700 border border-indigo-400/30 text-white font-semibold text-xs transition"
+          >
+            <ShieldAlert size={15} /> Anomaly Guard
+          </Link>
+          <Link
+            href="/dashboard/analytics"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-700/60 hover:bg-indigo-700 border border-indigo-400/30 text-white font-semibold text-xs transition"
+          >
+            <AreaChart size={15} /> Analytics
+          </Link>
         </div>
       </div>
 

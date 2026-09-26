@@ -17,6 +17,11 @@ import {
   ChevronRight,
   SlidersHorizontal,
   User,
+  Bot,
+  Scan,
+  Sparkles,
+  ShieldAlert,
+  AreaChart,
 } from "lucide-react";
 
 const navItems = [
@@ -29,6 +34,14 @@ const navItems = [
   { label: "Products", href: "/dashboard/products", icon: PackagePlus },
   { label: "Stock Availability", href: "/dashboard/stock", icon: BarChart3 },
   { label: "Warehouses", href: "/dashboard/warehouses", icon: Warehouse },
+];
+
+const intelligenceItems = [
+  { label: "AI Assistant", href: "/dashboard/assistant", icon: Bot, badge: "AI" },
+  { label: "QR & Barcode Scanner", href: "/dashboard/scanner", icon: Scan },
+  { label: "Smart Predictions", href: "/dashboard/predictions", icon: Sparkles },
+  { label: "Anomaly Detection", href: "/dashboard/anomalies", icon: ShieldAlert, badge: "Alerts" },
+  { label: "Advanced Analytics", href: "/dashboard/analytics", icon: AreaChart },
 ];
 
 const operationItems = [
@@ -76,7 +89,7 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+        <div className="px-3 pb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-500">
           Main
         </div>
         {navItems.map((item) => {
@@ -85,20 +98,49 @@ export default function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                 active
                   ? "bg-indigo-600 text-white shadow-lg shadow-indigo-900/30"
                   : "hover:bg-slate-800 hover:text-white"
               }`}
             >
-              <item.icon size={18} />
+              <item.icon size={17} />
               {item.label}
               {active && <ChevronRight size={14} className="ml-auto" />}
             </Link>
           );
         })}
 
-        <div className="pt-5 pb-2 px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+        {/* Intelligence & Automation */}
+        <div className="pt-4 pb-1.5 px-3 text-[10px] font-bold uppercase tracking-widest text-indigo-400 flex items-center justify-between">
+          <span>AI & Intelligence</span>
+          <Sparkles size={11} className="text-indigo-400" />
+        </div>
+        {intelligenceItems.map((item) => {
+          const active = isActive(item.href);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                active
+                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-900/30"
+                  : "hover:bg-slate-800 hover:text-white"
+              }`}
+            >
+              <item.icon size={17} />
+              <span>{item.label}</span>
+              {item.badge && (
+                <span className="ml-auto text-[9px] font-bold bg-indigo-500/30 text-indigo-300 border border-indigo-500/40 px-1.5 py-0.2 rounded">
+                  {item.badge}
+                </span>
+              )}
+              {active && !item.badge && <ChevronRight size={14} className="ml-auto" />}
+            </Link>
+          );
+        })}
+
+        <div className="pt-4 pb-1.5 px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">
           Operations
         </div>
         {operationItems.map((item) => {
@@ -107,20 +149,20 @@ export default function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                 active
                   ? "bg-indigo-600 text-white shadow-lg shadow-indigo-900/30"
                   : "hover:bg-slate-800 hover:text-white"
               }`}
             >
-              <item.icon size={18} />
+              <item.icon size={17} />
               {item.label}
               {active && <ChevronRight size={14} className="ml-auto" />}
             </Link>
           );
         })}
 
-        <div className="pt-5 pb-2 px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+        <div className="pt-4 pb-1.5 px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">
           Audit & Config
         </div>
         {reportItems.map((item) => {
@@ -129,13 +171,13 @@ export default function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                 active
                   ? "bg-indigo-600 text-white shadow-lg shadow-indigo-900/30"
                   : "hover:bg-slate-800 hover:text-white"
               }`}
             >
-              <item.icon size={18} />
+              <item.icon size={17} />
               {item.label}
               {active && <ChevronRight size={14} className="ml-auto" />}
             </Link>
@@ -153,14 +195,14 @@ export default function Sidebar() {
               : "hover:bg-slate-800 hover:text-white text-slate-400"
           }`}
         >
-          <User size={18} />
+          <User size={17} />
           My Profile
         </Link>
         <a
           href="/logout"
           className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all font-medium"
         >
-          <LogOut size={18} />
+          <LogOut size={17} />
           Logout
         </a>
       </div>

@@ -4,6 +4,180 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { processAiInventoryQuery } from "@/lib/aiAssistant";
+
+// --- AI INVENTORY ASSISTANT ACTION ---
+
+export async function askAiAssistantAction(prompt: string) {
+  try {
+    if (!prompt?.trim()) return { error: "Please enter a question or query." };
+    const data = await processAiInventoryQuery(prompt);
+    return { success: true, data };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Failed to query AI assistant.";
+    return { error: message };
+  }
+}
+
+// --- QUICK SCANNER ACTIONS ---
+
+export async function quickReceiveAction(productId: string, locationId: string, quantity: number) {
+  try {
+    if (!productId || !locationId || quantity <= 0) {
+      return { error: "Invalid product, location, or quantity." };
+    }
+
+    const move = await prisma.stockMove.create({
+      data: {
+        productId,
+        toLocationId: locationId,
+        quantity,
+        documentType: "Receipt",
+        status: "Done",
+        reference: `SCAN-IN-${Date.now().toString().slice(-4)}`,
+        partner: "Barcode Quick Scan",
+      },
+    });
+
+    const quant = await prisma.stockQuant.findUnique({
+      where: { productId_locationId: { productId, locationId } },
+    });
+
+    if (quant) {
+      await prisma.stockQuant.update({
+        where: { id: quant.id },
+        data: { quantity: quant.quantity + quantity },
+      });
+    } else {
+      await prisma.stockQuant.create({
+        data: { productId, locationId, quantity },
+      });
+    }
+
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/stock");
+    revalidatePath("/dashboard/history");
+    return { success: true };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Failed to record quick receipt.";
+    return { error: message };
+  }
+}
+
+export async function quickDeliverAction(productId: string, locationId: string, quantity: number) {
+  try {
+    if (!productId || !locationId || quantity <= 0) {
+      return { error: "Invalid product, location, or quantity." };
+    }
+
+    const quant = await prisma.stockQuant.findUnique({
+      where: { productId_locationId: { productId, locationId } },
+    });
+
+    if (!quant || quant.quantity < quantity) {
+      return {
+        error: `Insufficient stock at location. Available: ${quant ? quant.quantity : 0}`,
+      };
+    }
+
+    await prisma.$transaction([
+      prisma.stockQuant.update({
+        where: { id: quant.id },
+        data: { quantity: quant.quantity - quantity },
+      }),
+      prisma.stockMove.create({
+        data: {
+          productId,
+          fromLocationId: locationId,
+          quantity,
+          documentType: "Delivery",
+          status: "Done",
+          reference: `SCAN-OUT-${Date.now().toString().slice(-4)}`,
+          partner: "Barcode Dispatch",
+          isPicked: true,
+          isPacked: true,
+        },
+      }),
+    ]);
+
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/stock");
+    revalidatePath("/dashboard/history");
+    return { success: true };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Failed to record quick delivery.";
+    return { error: message };
+  }
+}
+
+export async function quickTransferAction(
+  productId: string,
+  fromLocationId: string,
+  toLocationId: string,
+  quantity: number
+) {
+  try {
+    if (!productId || !fromLocationId || !toLocationId || quantity <= 0) {
+      return { error: "Invalid parameters for transfer." };
+    }
+    if (fromLocationId === toLocationId) {
+      return { error: "Source and destination locations cannot be identical." };
+    }
+
+    const fromQuant = await prisma.stockQuant.findUnique({
+      where: { productId_locationId: { productId, locationId: fromLocationId } },
+    });
+
+    if (!fromQuant || fromQuant.quantity < quantity) {
+      return {
+        error: `Insufficient stock at source location. Available: ${fromQuant ? fromQuant.quantity : 0}`,
+      };
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.stockQuant.update({
+        where: { id: fromQuant.id },
+        data: { quantity: fromQuant.quantity - quantity },
+      });
+
+      const toQuant = await tx.stockQuant.findUnique({
+        where: { productId_locationId: { productId, locationId: toLocationId } },
+      });
+
+      if (toQuant) {
+        await tx.stockQuant.update({
+          where: { id: toQuant.id },
+          data: { quantity: toQuant.quantity + quantity },
+        });
+      } else {
+        await tx.stockQuant.create({
+          data: { productId, locationId: toLocationId, quantity },
+        });
+      }
+
+      await tx.stockMove.create({
+        data: {
+          productId,
+          fromLocationId,
+          toLocationId,
+          quantity,
+          documentType: "Internal",
+          status: "Done",
+          reference: `SCAN-RELOC-${Date.now().toString().slice(-4)}`,
+          partner: "Barcode Relocation",
+        },
+      });
+    });
+
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/stock");
+    revalidatePath("/dashboard/history");
+    return { success: true };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Failed to record transfer.";
+    return { error: message };
+  }
+}
 
 // --- AUTHENTICATION ACTIONS ---
 
