@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        String    @id @default(uuid())
+  email     String    @unique
+  password  String
+  name      String
+  role      String    @default("STAFF") // "MANAGER" or "STAFF"
+  otp       String?
+  otpExpiry DateTime?
+  createdAt DateTime  @default(now())
+}
+
+model Product {
+  id           String       @id @default(uuid())
+  name         String
+  sku          String       @unique
+  category     String
+  uom          String
+  initialStock Int          @default(0)
+  costPrice    Float        @default(0.0)
+  minStock     Int          @default(10)
+  reorderQty   Int          @default(50)
+  stockQuants  StockQuant[]
+  moveHistory  StockMove[]
+  createdAt    DateTime     @default(now())
+}
+
+model Location {
+  id          String       @id @default(uuid())
+  name        String
+  shortCode   String?
+  address     String?
+  isWarehouse Boolean      @default(false)
+  stockQuants StockQuant[]
+  movesFrom   StockMove[]  @relation("FromLocation")
+  movesTo     StockMove[]  @relation("ToLocation")
+  createdAt   DateTime     @default(now())
+}
+
+model StockQuant {
+  id         String   @id @default(uuid())
+  productId  String
+  locationId String
+  quantity   Int
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, locationId])
+}
+
+model StockMove {
+  id             String    @id @default(uuid())
+  productId      String
+  fromLocationId String?
+  toLocationId   String?
+  quantity       Int
+  documentType   String // "Receipt", "Delivery", "Internal", "Adjustment"
+  status         String // "Draft", "Waiting", "Ready", "Done", "Canceled"
+  date           DateTime  @default(now())
+  reference      String?
+  partner        String? // Vendor/Supplier for Receipts, Customer for Deliveries
+  scheduledDate  DateTime?
+  responsible    String?
+  isPicked       Boolean   @default(false)
+  isPacked       Boolean   @default(false)
+
+  product      Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  fromLocation Location? @relation("FromLocation", fields: [fromLocationId], references: [id])
+  toLocation   Location? @relation("ToLocation", fields: [toLocationId], references: [id])
+}
