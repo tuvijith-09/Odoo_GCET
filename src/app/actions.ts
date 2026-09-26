@@ -2,11 +2,10 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 
 export async function validateReceipt(moveId: string) {
   const move = await prisma.stockMove.findUnique({ where: { id: moveId } });
-  if (!move || move.status === "Done") return;
+  if (!move || move.status === "Done") return { error: "Move not found or already done." };
 
   if (move.toLocationId) {
     const quant = await prisma.stockQuant.findUnique({
@@ -42,12 +41,12 @@ export async function validateReceipt(moveId: string) {
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/receipts");
   revalidatePath("/dashboard/history");
-  redirect("/dashboard/receipts");
+  return { success: true };
 }
 
 export async function validateDelivery(moveId: string) {
   const move = await prisma.stockMove.findUnique({ where: { id: moveId } });
-  if (!move || move.status === "Done") return;
+  if (!move || move.status === "Done") return { error: "Move not found or already done." };
 
   if (move.fromLocationId) {
     const quant = await prisma.stockQuant.findUnique({
@@ -61,13 +60,13 @@ export async function validateDelivery(moveId: string) {
 
     if (quant) {
       const newQty = quant.quantity - move.quantity;
-      if (newQty < 0) throw new Error("Insufficient stock");
+      if (newQty < 0) return { error: "Insufficient stock at source location." };
       await prisma.stockQuant.update({
         where: { id: quant.id },
         data: { quantity: newQty },
       });
     } else {
-      throw new Error("No stock found at this location");
+      return { error: "No stock found at this location." };
     }
   }
 
@@ -79,12 +78,12 @@ export async function validateDelivery(moveId: string) {
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/deliveries");
   revalidatePath("/dashboard/history");
-  redirect("/dashboard/deliveries");
+  return { success: true };
 }
 
 export async function validateInternalTransfer(moveId: string) {
   const move = await prisma.stockMove.findUnique({ where: { id: moveId } });
-  if (!move || move.status === "Done") return;
+  if (!move || move.status === "Done") return { error: "Move not found or already done." };
 
   if (move.fromLocationId) {
     const fromQuant = await prisma.stockQuant.findUnique({
@@ -97,11 +96,13 @@ export async function validateInternalTransfer(moveId: string) {
     });
     if (fromQuant) {
       const newQty = fromQuant.quantity - move.quantity;
-      if (newQty < 0) throw new Error("Insufficient stock at source");
+      if (newQty < 0) return { error: "Insufficient stock at source location." };
       await prisma.stockQuant.update({
         where: { id: fromQuant.id },
         data: { quantity: newQty },
       });
+    } else {
+      return { error: "No stock found at source location." };
     }
   }
 
@@ -138,7 +139,7 @@ export async function validateInternalTransfer(moveId: string) {
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/transfers");
   revalidatePath("/dashboard/history");
-  redirect("/dashboard/transfers");
+  return { success: true };
 }
 
 export async function cancelMove(moveId: string, returnPath: string) {
@@ -149,5 +150,5 @@ export async function cancelMove(moveId: string, returnPath: string) {
   revalidatePath("/dashboard");
   revalidatePath(returnPath);
   revalidatePath("/dashboard/history");
-  redirect(returnPath);
+  return { success: true };
 }

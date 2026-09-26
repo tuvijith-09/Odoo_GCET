@@ -1,28 +1,46 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { PackagePlus, Search } from "lucide-react";
+import { PackagePlus } from "lucide-react";
+import SearchFilter from "@/components/SearchFilter";
 
 export const dynamic = "force-dynamic";
 
-export default async function ProductsPage() {
+export default async function ProductsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const { q } = await searchParams;
+  const query = q ? {
+    OR: [
+      { name: { contains: q } },
+      { sku: { contains: q } },
+      { category: { contains: q } }
+    ]
+  } : {};
+
   const products = await prisma.product.findMany({
+    where: query,
     include: { stockQuants: { include: { location: true } } },
     orderBy: { name: "asc" },
   });
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Products</h1>
           <p className="text-slate-500 mt-1">Manage your product catalog & stock levels</p>
         </div>
-        <Link
-          href="/dashboard/products/new"
-          className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-lg font-medium hover:bg-indigo-700 active:scale-[0.98] transition shadow-lg shadow-indigo-200"
-        >
-          <PackagePlus size={18} /> Add Product
-        </Link>
+        <div className="flex items-center gap-4">
+          <SearchFilter placeholder="Search SKU, Name, Category..." />
+          <Link
+            href="/dashboard/products/new"
+            className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-lg font-medium hover:bg-indigo-700 active:scale-[0.98] transition shadow-lg shadow-indigo-200 shrink-0"
+          >
+            <PackagePlus size={18} /> Add Product
+          </Link>
+        </div>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
@@ -82,7 +100,7 @@ export default async function ProductsPage() {
             {products.length === 0 && (
               <tr>
                 <td colSpan={6} className="px-6 py-16 text-center text-slate-400">
-                  No products yet. Click &quot;Add Product&quot; to create your first one.
+                  {q ? "No products match your search." : "No products yet. Click 'Add Product' to create your first one."}
                 </td>
               </tr>
             )}

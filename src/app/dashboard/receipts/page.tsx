@@ -4,29 +4,44 @@ import ValidateButton from "@/components/ValidateButton";
 import CancelButton from "@/components/CancelButton";
 import { validateReceipt } from "@/app/actions";
 import { ClipboardList } from "lucide-react";
+import SearchFilter from "@/components/SearchFilter";
 
 export const dynamic = "force-dynamic";
 
-export default async function ReceiptsPage() {
+export default async function ReceiptsPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+  const { q } = await searchParams;
+  
   const receipts = await prisma.stockMove.findMany({
-    where: { documentType: "Receipt" },
+    where: { 
+      documentType: "Receipt",
+      ...(q ? {
+        OR: [
+          { reference: { contains: q } },
+          { product: { name: { contains: q } } },
+          { product: { sku: { contains: q } } }
+        ]
+      } : {})
+    },
     include: { product: true, toLocation: true },
     orderBy: { date: "desc" },
   });
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Receipts</h1>
           <p className="text-slate-500 mt-1">Manage incoming goods from suppliers</p>
         </div>
-        <Link
-          href="/dashboard/receipts/new"
-          className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-lg font-medium hover:bg-indigo-700 active:scale-[0.98] transition shadow-lg shadow-indigo-200"
-        >
-          <ClipboardList size={18} /> New Receipt
-        </Link>
+        <div className="flex items-center gap-4">
+          <SearchFilter placeholder="Search Ref, Product, SKU..." />
+          <Link
+            href="/dashboard/receipts/new"
+            className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-lg font-medium hover:bg-indigo-700 active:scale-[0.98] transition shadow-lg shadow-indigo-200 shrink-0"
+          >
+            <ClipboardList size={18} /> New Receipt
+          </Link>
+        </div>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
@@ -64,7 +79,7 @@ export default async function ReceiptsPage() {
               </tr>
             ))}
             {receipts.length === 0 && (
-              <tr><td colSpan={7} className="px-6 py-16 text-center text-slate-400">No receipts yet</td></tr>
+              <tr><td colSpan={7} className="px-6 py-16 text-center text-slate-400">No receipts found</td></tr>
             )}
           </tbody>
         </table>
